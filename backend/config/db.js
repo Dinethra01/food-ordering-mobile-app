@@ -103,19 +103,30 @@ const seedDefaultAdmin = async () => {
 };
 
 const connectDB = async () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const mongoUri = process.env.MONGO_URI;
+
+  if (isProduction && !mongoUri) {
+    throw new Error('MONGO_URI is required in production. Configure it in Railway Variables.');
+  }
+
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/food_ordering', {
+    const conn = await mongoose.connect(mongoUri || 'mongodb://127.0.0.1:27017/food_ordering', {
       serverSelectionTimeoutMS: 2500,
     });
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     await seedFoodItems();
     await seedDefaultAdmin();
   } catch (error) {
+    if (isProduction) {
+      throw new Error(`Could not connect to the configured MongoDB database: ${error.message}`);
+    }
+
     console.log(`⚠️ Primary MongoDB unavailable (${error.message}). Attempting In-Memory Database...`);
     try {
       const { MongoMemoryServer } = require('mongodb-memory-server');
       const mongoServer = await MongoMemoryServer.create({
-        binary: { version: '5.0.14' },
+        binary: { version: '7.0.14' },
       });
       const mongoUri = mongoServer.getUri();
       const conn = await mongoose.connect(mongoUri);
@@ -124,8 +135,7 @@ const connectDB = async () => {
       await seedFoodItems();
       await seedDefaultAdmin();
     } catch (memError) {
-      console.error(`⚠️ Could not initialize database: ${memError.message}`);
-      console.log('Backend will remain online.');
+      throw new Error(`Could not initialize the development database: ${memError.message}`);
     }
   }
 };
