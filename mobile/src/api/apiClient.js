@@ -2,11 +2,27 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-// In Expo/React Native development, localhost on Android emulator is 10.0.2.2 or machine IP.
-// On Web/iOS simulator it's localhost or 127.0.0.1
-const API_BASE_URL = Platform.OS === 'android' 
-  ? 'http://10.0.2.2:5001/api' 
-  : 'http://localhost:5001/api';
+// Set EXPO_PUBLIC_API_URL to the deployed backend URL. The scheme and /api path
+// are added when omitted so a Railway hostname alone is also accepted.
+const configuredApiUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
+const normalizeApiUrl = (url) => {
+  let normalizedUrl = url.replace(/\/+$/, '');
+  if (!/^https?:\/\//i.test(normalizedUrl)) {
+    normalizedUrl = `https://${normalizedUrl}`;
+  }
+  if (!/\/api$/i.test(normalizedUrl)) {
+    normalizedUrl += '/api';
+  }
+  return normalizedUrl;
+};
+
+const API_BASE_URL = configuredApiUrl
+  ? normalizeApiUrl(configuredApiUrl)
+  : (
+  Platform.OS === 'android'
+    ? 'http://10.0.2.2:5000/api'
+    : 'http://localhost:5000/api'
+  );
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
