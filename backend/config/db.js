@@ -104,10 +104,10 @@ const seedDefaultAdmin = async () => {
 
 const connectDB = async () => {
   const isProduction = process.env.NODE_ENV === 'production';
-  const mongoUri = process.env.MONGO_URI;
+  const mongoUri = process.env.MONGO_URI || process.env.MONGO_URL || process.env.MONGODB_URI;
 
   if (isProduction && !mongoUri) {
-    throw new Error('MONGO_URI is required in production. Configure it in Railway Variables.');
+    throw new Error('MongoDB connection string is required in production. Set MONGO_URI, MONGO_URL, or MONGODB_URI in Railway Variables.');
   }
 
   try {
