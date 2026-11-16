@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { getOrdersApi, cancelOrderApi, updateOrderStatusApi } from '../services/api';
 import { AuthContext } from '../context/AuthContext';
-import { formatLKR } from '../utils/currency';
 
 const STATUS_FILTERS = ['All', 'Pending', 'Preparing', 'Out for Delivery', 'Delivered', 'Cancelled'];
 
@@ -270,7 +269,7 @@ const OrderHistoryScreen = () => {
                 {sub.quantity}x {sub.foodItemId?.name || 'Food Item'}
               </Text>
               <Text style={styles.itemPriceText}>
-                {formatLKR((sub.price || 0) * sub.quantity)}
+                ${((sub.price || 0) * sub.quantity).toFixed(2)}
               </Text>
             </View>
           ))}
@@ -289,7 +288,7 @@ const OrderHistoryScreen = () => {
 
           <View style={styles.totalContainer}>
             <Text style={styles.totalLabel}>TOTAL</Text>
-            <Text style={styles.totalValue}>{formatLKR(item.totalAmount)}</Text>
+            <Text style={styles.totalValue}>${Number(item.totalAmount).toFixed(2)}</Text>
             <Text style={styles.paymentMethodText}>Cash on Delivery</Text>
           </View>
         </View>

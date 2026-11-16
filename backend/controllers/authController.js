@@ -19,15 +19,16 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide all required fields' });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
-    const userExists = await User.findOne({ email: normalizedEmail });
+    const cleanEmail = email.toLowerCase().trim();
+
+    const userExists = await User.findOne({ email: cleanEmail });
     if (userExists) {
       return res.status(400).json({ success: false, message: 'User already exists with this email' });
     }
 
     const user = await User.create({
-      name,
-      email: normalizedEmail,
+      name: name.trim(),
+      email: cleanEmail,
       password,
       role: role || 'user',
     });
@@ -48,13 +49,7 @@ const registerUser = async (req, res) => {
     }
   } catch (error) {
     console.error('Register error:', error);
-    if (error.code === 11000) {
-      return res.status(409).json({ success: false, message: 'User already exists with this email' });
-    }
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ success: false, message: error.message });
-    }
-    return res.status(500).json({ success: false, message: error.message || 'Unable to register user right now' });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -69,8 +64,9 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide email and password' });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
-    const user = await User.findOne({ email: normalizedEmail }).select('+password');
+    const cleanEmail = email.toLowerCase().trim();
+
+    const user = await User.findOne({ email: cleanEmail }).select('+password');
 
     if (user && (await user.matchPassword(password))) {
       return res.status(200).json({

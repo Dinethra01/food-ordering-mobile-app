@@ -25,10 +25,23 @@ app.get('/uploads/default-food.jpg', (req, res) => {
 // Serve static uploads folder for images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Mount Routers
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/food-items', require('./routes/foodItemRoutes'));
-app.use('/api/orders', require('./routes/orderRoutes'));
+// Mount Routers (Supports both /api/* and root /* paths for all web & mobile clients)
+const authRoutes = require('./routes/authRoutes');
+const foodItemRoutes = require('./routes/foodItemRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+
+// Auth routes (/api/auth, /auth, and direct shortcuts)
+app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
+app.use('/', authRoutes);
+
+// Food items routes (/api/food-items and /food-items)
+app.use('/api/food-items', foodItemRoutes);
+app.use('/food-items', foodItemRoutes);
+
+// Orders routes (/api/orders and /orders)
+app.use('/api/orders', orderRoutes);
+app.use('/orders', orderRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -61,6 +74,15 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
 });
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`⚠️ Port ${PORT} is busy. Stopping previous process...`);
+  } else {
+    console.error('Server error:', err);
+  }
+});
+

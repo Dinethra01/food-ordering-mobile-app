@@ -140,10 +140,10 @@ const AddFoodItemScreen = ({ route, navigation }) => {
           onChangeText={setName}
         />
 
-        <Text style={styles.label}>Price (LKR / Rs.) *</Text>
+        <Text style={styles.label}>Price ($) *</Text>
         <TextInput
           style={styles.input}
-          placeholder="e.g. 1650.00"
+          placeholder="e.g. 14.99"
           placeholderTextColor="#94A3B8"
           keyboardType="decimal-pad"
           value={price}

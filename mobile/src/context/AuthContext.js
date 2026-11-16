@@ -1,7 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loginApi, registerApi, getMeApi } from '../services/api';
-import { getStoredBackendUrl, API_BASE_URL } from '../config/apiConfig';
 
 export const AuthContext = createContext();
 
@@ -43,16 +42,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return { success: true };
     } catch (error) {
-      console.log('Login error:', error.message, error.response?.data);
-      if (!error.response) {
-        const activeUrl = await getStoredBackendUrl();
-        return {
-          success: false,
-          error: `Cannot reach server at ${activeUrl}. Please ensure your backend is running on port 5001 and your phone and Mac are on the same Wi-Fi.`,
-          isNetworkError: true,
-        };
-      }
-      const message = error.response?.data?.message || 'Invalid email or password.';
+      const message = error.response?.data?.message || 'Login failed. Please check credentials.';
       return { success: false, error: message };
     }
   };
@@ -69,16 +59,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return { success: true };
     } catch (error) {
-      console.log('Register error:', error.message, error.response?.data);
-      if (!error.response) {
-        const activeUrl = await getStoredBackendUrl();
-        return {
-          success: false,
-          error: `Cannot reach server at ${activeUrl}. Please ensure your backend is running on port 5001 and your phone and Mac are on the same Wi-Fi.`,
-          isNetworkError: true,
-        };
-      }
-      const message = error.response?.data?.message || 'Registration failed. Please check inputs.';
+      const message = error.response?.data?.message || 'Registration failed.';
       return { success: false, error: message };
     }
   };

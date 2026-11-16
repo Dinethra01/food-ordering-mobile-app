@@ -1,6 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_BASE_URL, getStoredBackendUrl } from '../config/apiConfig';
+import { API_BASE_URL } from '../config/apiConfig';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -10,16 +10,9 @@ const api = axios.create({
   timeout: 10000,
 });
 
-// Request interceptor to attach dynamic Base URL and JWT Token
+// Request interceptor to attach JWT Token
 api.interceptors.request.use(
   async (config) => {
-    // 1. Check if custom backend URL was configured
-    const activeUrl = await getStoredBackendUrl();
-    if (activeUrl) {
-      config.baseURL = activeUrl;
-    }
-
-    // 2. Attach JWT token
     const token = await AsyncStorage.getItem('userToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -30,13 +23,6 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
-
-// Health check endpoint test
-export const testBackendHealthApi = async (customUrl) => {
-  const targetBase = customUrl || (await getStoredBackendUrl()) || API_BASE_URL;
-  const rootUrl = targetBase.replace(/\/api\/?$/, '');
-  return axios.get(`${rootUrl}/`, { timeout: 4000 });
-};
 
 // Auth API calls
 export const loginApi = (email, password) => api.post('/auth/login', { email, password });

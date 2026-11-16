@@ -18,7 +18,6 @@ import { getFoodItemsApi, deleteFoodItemApi } from '../services/api';
 import { getImageUrl } from '../config/apiConfig';
 import { AuthContext } from '../context/AuthContext';
 import { CartContext } from '../context/CartContext';
-import { formatLKR } from '../utils/currency';
 
 const CATEGORIES = ['All', 'Main Course', 'Starters', 'Desserts', 'Beverages'];
 
@@ -135,7 +134,7 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.cardTitle} numberOfLines={1}>
               {item.name}
             </Text>
-            <Text style={styles.cardPrice}>{formatLKR(item.price)}</Text>
+            <Text style={styles.cardPrice}>${Number(item.price).toFixed(2)}</Text>
           </View>
 
           <Text style={styles.categoryTag}>Category: {item.category}</Text>
@@ -330,7 +329,7 @@ const HomeScreen = ({ navigation }) => {
                   <View style={styles.modalHeaderRow}>
                     <Text style={styles.modalTitle}>{selectedFoodItem.name}</Text>
                     <Text style={styles.modalPrice}>
-                      {formatLKR(selectedFoodItem.price)}
+                      ${Number(selectedFoodItem.price).toFixed(2)}
                     </Text>
                   </View>
 
@@ -386,7 +385,7 @@ const HomeScreen = ({ navigation }) => {
                         onPress={handleModalAddToCart}
                       >
                         <Text style={styles.modalAddCartBtnText}>
-                          Add to Cart • {formatLKR(selectedFoodItem.price * modalQuantity)}
+                          Add to Cart • ${(selectedFoodItem.price * modalQuantity).toFixed(2)}
                         </Text>
                       </TouchableOpacity>
                     </View>
