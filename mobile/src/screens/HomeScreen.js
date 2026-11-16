@@ -11,11 +11,14 @@ import {
   RefreshControl,
   SafeAreaView,
   Alert,
+  Modal,
+  ScrollView,
 } from 'react-native';
 import { getFoodItemsApi, deleteFoodItemApi } from '../services/api';
 import { getImageUrl } from '../config/apiConfig';
 import { AuthContext } from '../context/AuthContext';
 import { CartContext } from '../context/CartContext';
+import { formatLKR } from '../utils/currency';
 
 const CATEGORIES = ['All', 'Main Course', 'Starters', 'Desserts', 'Beverages'];
 
@@ -25,6 +28,10 @@ const HomeScreen = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Food Detail Modal state (mirrors website detail view)
+  const [selectedFoodItem, setSelectedFoodItem] = useState(null);
+  const [modalQuantity, setModalQuantity] = useState(1);
 
   const { user, logout } = useContext(AuthContext);
   const { addToCart } = useContext(CartContext);
@@ -63,6 +70,28 @@ const HomeScreen = ({ navigation }) => {
     fetchFoodItems();
   };
 
+  const openDetailModal = (item) => {
+    setSelectedFoodItem(item);
+    setModalQuantity(1);
+  };
+
+  const closeDetailModal = () => {
+    setSelectedFoodItem(null);
+    setModalQuantity(1);
+  };
+
+  const handleModalAddToCart = () => {
+    if (!selectedFoodItem) return;
+    for (let i = 0; i < modalQuantity; i++) {
+      addToCart(selectedFoodItem);
+    }
+    Alert.alert(
+      'Added to Cart 🛒',
+      `${modalQuantity}x ${selectedFoodItem.name} added to your order!`
+    );
+    closeDetailModal();
+  };
+
   const handleDeleteFoodItem = (id, name) => {
     Alert.alert('Delete Food Item', `Are you sure you want to delete '${name}'?`, [
       { text: 'Cancel', style: 'cancel' },
@@ -74,6 +103,9 @@ const HomeScreen = ({ navigation }) => {
             await deleteFoodItemApi(id);
             Alert.alert('Success', `'${name}' removed from menu.`);
             fetchFoodItems();
+            if (selectedFoodItem?._id === id) {
+              closeDetailModal();
+            }
           } catch (err) {
             Alert.alert('Error', err.response?.data?.message || 'Failed to delete item');
           }
@@ -86,8 +118,12 @@ const HomeScreen = ({ navigation }) => {
     const isOutOfStock = !item.isAvailable || item.stockQuantity <= 0;
 
     return (
-      <View style={styles.card}>
-        {/* Fixed aspect compact thumbnail - prevents oversized banner stretching */}
+      <TouchableOpacity
+        style={styles.card}
+        activeOpacity={0.85}
+        onPress={() => openDetailModal(item)}
+      >
+        {/* Fixed aspect thumbnail */}
         <Image
           source={{ uri: getImageUrl(item.image) }}
           style={styles.cardImageThumbnail}
@@ -99,7 +135,7 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.cardTitle} numberOfLines={1}>
               {item.name}
             </Text>
-            <Text style={styles.cardPrice}>${Number(item.price).toFixed(2)}</Text>
+            <Text style={styles.cardPrice}>{formatLKR(item.price)}</Text>
           </View>
 
           <Text style={styles.categoryTag}>Category: {item.category}</Text>
@@ -120,11 +156,12 @@ const HomeScreen = ({ navigation }) => {
               </Text>
             </View>
 
-            {/* Customer Add to Cart button */}
+            {/* Quick Add Button */}
             <TouchableOpacity
               style={[styles.addButton, isOutOfStock && styles.addButtonDisabled]}
               disabled={isOutOfStock}
-              onPress={() => {
+              onPress={(e) => {
+                e?.stopPropagation?.();
                 addToCart(item);
                 Alert.alert('Added to Cart 🛒', `${item.name} added to your order!`);
               }}
@@ -140,27 +177,33 @@ const HomeScreen = ({ navigation }) => {
             <View style={styles.adminBar}>
               <TouchableOpacity
                 style={styles.editBtn}
-                onPress={() => navigation.navigate('AddFoodItem', { item })}
+                onPress={(e) => {
+                  e?.stopPropagation?.();
+                  navigation.navigate('AddFoodItem', { item });
+                }}
               >
                 <Text style={styles.editBtnText}>✏️ Edit</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.deleteBtn}
-                onPress={() => handleDeleteFoodItem(item._id, item.name)}
+                onPress={(e) => {
+                  e?.stopPropagation?.();
+                  handleDeleteFoodItem(item._id, item.name);
+                }}
               >
                 <Text style={styles.deleteBtnText}>🗑️ Delete</Text>
               </TouchableOpacity>
             </View>
           )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header Bar */}
+      {/* Top Header Bar */}
       <View style={styles.topBar}>
         <View>
           <Text style={styles.welcomeText}>Hello, {user?.name || 'Guest'} 👋</Text>
@@ -171,12 +214,20 @@ const HomeScreen = ({ navigation }) => {
 
         <View style={styles.topRightActions}>
           {user?.role === 'admin' && (
-            <TouchableOpacity
-              style={styles.adminAddBtn}
-              onPress={() => navigation.navigate('AddFoodItem')}
-            >
-              <Text style={styles.adminAddBtnText}>+ New Item</Text>
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity
+                style={styles.adminAnalyticsBtn}
+                onPress={() => navigation.navigate('AdminDashboard')}
+              >
+                <Text style={styles.adminAnalyticsBtnText}>📊 Stats</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.adminAddBtn}
+                onPress={() => navigation.navigate('AddFoodItem')}
+              >
+                <Text style={styles.adminAddBtnText}>+ New</Text>
+              </TouchableOpacity>
+            </>
           )}
 
           <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
@@ -244,6 +295,140 @@ const HomeScreen = ({ navigation }) => {
           }
         />
       )}
+
+      {/* Detail Modal (Mirrors Web App Experience) */}
+      <Modal
+        visible={!!selectedFoodItem}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={closeDetailModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {selectedFoodItem && (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={styles.modalImageContainer}>
+                  <Image
+                    source={{ uri: getImageUrl(selectedFoodItem.image) }}
+                    style={styles.modalImage}
+                    resizeMode="cover"
+                  />
+                  <TouchableOpacity
+                    style={styles.modalCloseCircle}
+                    onPress={closeDetailModal}
+                  >
+                    <Text style={styles.modalCloseCircleText}>✕</Text>
+                  </TouchableOpacity>
+                  <View style={styles.modalCategoryBadge}>
+                    <Text style={styles.modalCategoryText}>
+                      {selectedFoodItem.category}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.modalBody}>
+                  <View style={styles.modalHeaderRow}>
+                    <Text style={styles.modalTitle}>{selectedFoodItem.name}</Text>
+                    <Text style={styles.modalPrice}>
+                      {formatLKR(selectedFoodItem.price)}
+                    </Text>
+                  </View>
+
+                  <View style={styles.modalStockRow}>
+                    <View
+                      style={[
+                        styles.stockBadge,
+                        (!selectedFoodItem.isAvailable || selectedFoodItem.stockQuantity <= 0)
+                          ? styles.outOfStockBadge
+                          : styles.inStockBadge,
+                      ]}
+                    >
+                      <Text style={styles.stockBadgeText}>
+                        {!selectedFoodItem.isAvailable || selectedFoodItem.stockQuantity <= 0
+                          ? 'Out of Stock'
+                          : `In Stock (${selectedFoodItem.stockQuantity} remaining)`}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.modalSectionLabel}>Description</Text>
+                  <Text style={styles.modalDescription}>
+                    {selectedFoodItem.description || 'No description provided.'}
+                  </Text>
+
+                  {/* Quantity selector & Add to cart */}
+                  {selectedFoodItem.isAvailable && selectedFoodItem.stockQuantity > 0 ? (
+                    <View style={styles.modalActionSection}>
+                      <View style={styles.modalQtySelector}>
+                        <TouchableOpacity
+                          style={styles.modalQtyBtn}
+                          disabled={modalQuantity <= 1}
+                          onPress={() => setModalQuantity((prev) => Math.max(1, prev - 1))}
+                        >
+                          <Text style={styles.modalQtyBtnText}>-</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.modalQtyValue}>{modalQuantity}</Text>
+                        <TouchableOpacity
+                          style={styles.modalQtyBtn}
+                          disabled={modalQuantity >= selectedFoodItem.stockQuantity}
+                          onPress={() =>
+                            setModalQuantity((prev) =>
+                              Math.min(selectedFoodItem.stockQuantity, prev + 1)
+                            )
+                          }
+                        >
+                          <Text style={styles.modalQtyBtnText}>+</Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      <TouchableOpacity
+                        style={styles.modalAddCartBtn}
+                        onPress={handleModalAddToCart}
+                      >
+                        <Text style={styles.modalAddCartBtnText}>
+                          Add to Cart • {formatLKR(selectedFoodItem.price * modalQuantity)}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <View style={styles.modalUnavailableBox}>
+                      <Text style={styles.modalUnavailableText}>
+                        This item is currently sold out.
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Admin Controls inside Modal */}
+                  {user?.role === 'admin' && (
+                    <View style={styles.modalAdminActions}>
+                      <TouchableOpacity
+                        style={styles.modalEditBtn}
+                        onPress={() => {
+                          const item = selectedFoodItem;
+                          closeDetailModal();
+                          navigation.navigate('AddFoodItem', { item });
+                        }}
+                      >
+                        <Text style={styles.modalEditBtnText}>✏️ Edit Dish</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.modalDeleteBtn}
+                        onPress={() => {
+                          const item = selectedFoodItem;
+                          closeDetailModal();
+                          handleDeleteFoodItem(item._id, item.name);
+                        }}
+                      >
+                        <Text style={styles.modalDeleteBtnText}>🗑️ Delete Dish</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -277,9 +462,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  adminAnalyticsBtn: {
+    backgroundColor: '#3730A3',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  adminAnalyticsBtnText: {
+    color: '#C7D2FE',
+    fontWeight: '700',
+    fontSize: 12,
+  },
   adminAddBtn: {
     backgroundColor: '#059669',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,
   },
@@ -341,7 +537,6 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
   },
-  /* Sleek modern horizontal card layout */
   card: {
     flexDirection: 'row',
     backgroundColor: '#1E293B',
@@ -479,6 +674,191 @@ const styles = StyleSheet.create({
   emptySubtitle: {
     color: '#64748B',
     marginTop: 4,
+  },
+
+  /* Detail Modal Styles */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#1E293B',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '85%',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  modalImageContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 220,
+    backgroundColor: '#0F172A',
+  },
+  modalImage: {
+    width: '100%',
+    height: '100%',
+  },
+  modalCloseCircle: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseCircleText: {
+    color: '#FFF',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  modalCategoryBadge: {
+    position: 'absolute',
+    bottom: 12,
+    left: 16,
+    backgroundColor: 'rgba(255, 107, 0, 0.9)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  modalCategoryText: {
+    color: '#FFF',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  modalBody: {
+    padding: 20,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#FFF',
+    flex: 1,
+    marginRight: 12,
+  },
+  modalPrice: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#10B981',
+  },
+  modalStockRow: {
+    marginTop: 8,
+    marginBottom: 16,
+    flexDirection: 'row',
+  },
+  modalSectionLabel: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  modalDescription: {
+    color: '#CBD5E1',
+    fontSize: 14,
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  modalActionSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 8,
+  },
+  modalQtySelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0F172A',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#334155',
+    padding: 4,
+  },
+  modalQtyBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 8,
+    backgroundColor: '#1E293B',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalQtyBtnText: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  modalQtyValue: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '700',
+    paddingHorizontal: 14,
+  },
+  modalAddCartBtn: {
+    flex: 1,
+    backgroundColor: '#FF6B00',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalAddCartBtnText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  modalUnavailableBox: {
+    backgroundColor: '#451A03',
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalUnavailableText: {
+    color: '#FDBA74',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  modalAdminActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#334155',
+  },
+  modalEditBtn: {
+    flex: 1,
+    backgroundColor: '#2563EB',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalEditBtnText: {
+    color: '#FFF',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  modalDeleteBtn: {
+    flex: 1,
+    backgroundColor: '#991B1B',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalDeleteBtnText: {
+    color: '#FECACA',
+    fontWeight: '700',
+    fontSize: 13,
   },
 });
 

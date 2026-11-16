@@ -17,6 +17,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Fallback for default food image to avoid broken image links
+app.get('/uploads/default-food.jpg', (req, res) => {
+  res.redirect('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80');
+});
+
 // Serve static uploads folder for images
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -54,7 +59,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);

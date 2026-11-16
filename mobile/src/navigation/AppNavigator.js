@@ -13,6 +13,8 @@ import HomeScreen from '../screens/HomeScreen';
 import AddFoodItemScreen from '../screens/AddFoodItemScreen';
 import CartScreen from '../screens/CartScreen';
 import OrderHistoryScreen from '../screens/OrderHistoryScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import AdminDashboardScreen from '../screens/AdminDashboardScreen';
 
 const AuthStack = createNativeStackNavigator();
 const HomeStack = createNativeStackNavigator();
@@ -36,6 +38,11 @@ const HomeStackNavigator = () => {
         name="AddFoodItem"
         component={AddFoodItemScreen}
         options={{ title: 'Add Food Item' }}
+      />
+      <HomeStack.Screen
+        name="AdminDashboard"
+        component={AdminDashboardScreen}
+        options={{ title: 'Admin Analytics' }}
       />
     </HomeStack.Navigator>
   );
@@ -67,6 +74,7 @@ const MainTabNavigator = () => {
           if (route.name === 'HomeTab') icon = '🍕';
           else if (route.name === 'CartTab') icon = '🛒';
           else if (route.name === 'OrdersTab') icon = '📜';
+          else if (route.name === 'ProfileTab') icon = '👤';
 
           return <Text style={{ fontSize: 20 }}>{icon}</Text>;
         },
@@ -90,6 +98,11 @@ const MainTabNavigator = () => {
         name="OrdersTab"
         component={OrderHistoryScreen}
         options={{ tabBarLabel: 'Orders' }}
+      />
+      <Tab.Screen
+        name="ProfileTab"
+        component={ProfileScreen}
+        options={{ tabBarLabel: 'Profile' }}
       />
     </Tab.Navigator>
   );

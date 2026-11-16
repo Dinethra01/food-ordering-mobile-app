@@ -15,6 +15,7 @@ import {
 import { CartContext } from '../context/CartContext';
 import { createOrderApi } from '../services/api';
 import { getImageUrl } from '../config/apiConfig';
+import { formatLKR } from '../utils/currency';
 
 const CartScreen = ({ navigation }) => {
   const { cartItems, updateQuantity, removeFromCart, clearCart, getCartTotal } =
@@ -53,14 +54,14 @@ const CartScreen = ({ navigation }) => {
       if (response.data.success) {
         Alert.alert(
           'Order Placed! 🎉',
-          `Your order has been successfully placed!\nTotal: $${response.data.data.totalAmount.toFixed(2)}`,
+          `Your order has been successfully placed!\nTotal: ${formatLKR(response.data.data.totalAmount)}`,
           [
             {
               text: 'View Order History',
               onPress: () => {
                 clearCart();
                 setDeliveryAddress('');
-                navigation.navigate('Orders');
+                navigation.navigate('OrdersTab');
               },
             },
           ]
@@ -88,7 +89,7 @@ const CartScreen = ({ navigation }) => {
 
         <View style={styles.itemInfo}>
           <Text style={styles.itemTitle}>{item.foodItem.name}</Text>
-          <Text style={styles.itemPrice}>${item.foodItem.price.toFixed(2)} each</Text>
+          <Text style={styles.itemPrice}>{formatLKR(item.foodItem.price)} each</Text>
 
           <View style={styles.qtyRow}>
             <TouchableOpacity
@@ -107,7 +108,7 @@ const CartScreen = ({ navigation }) => {
               <Text style={styles.qtyBtnText}>+</Text>
             </TouchableOpacity>
 
-            <Text style={styles.subtotalText}>${itemTotal.toFixed(2)}</Text>
+            <Text style={styles.subtotalText}>{formatLKR(itemTotal)}</Text>
           </View>
         </View>
 
@@ -166,7 +167,7 @@ const CartScreen = ({ navigation }) => {
           <View style={styles.summaryCard}>
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Subtotal</Text>
-              <Text style={styles.summaryValue}>${getCartTotal().toFixed(2)}</Text>
+              <Text style={styles.summaryValue}>{formatLKR(getCartTotal())}</Text>
             </View>
 
             <View style={styles.summaryRow}>
@@ -177,7 +178,7 @@ const CartScreen = ({ navigation }) => {
 
             <View style={[styles.summaryRow, styles.totalRow]}>
               <Text style={styles.totalLabel}>Total Amount</Text>
-              <Text style={styles.totalValue}>${getCartTotal().toFixed(2)}</Text>
+              <Text style={styles.totalValue}>{formatLKR(getCartTotal())}</Text>
             </View>
 
             <TouchableOpacity
@@ -188,7 +189,7 @@ const CartScreen = ({ navigation }) => {
               {loading ? (
                 <ActivityIndicator color="#FFF" />
               ) : (
-                <Text style={styles.checkoutBtnText}>Place Order (${getCartTotal().toFixed(2)})</Text>
+                <Text style={styles.checkoutBtnText}>Place Order ({formatLKR(getCartTotal())})</Text>
               )}
             </TouchableOpacity>
           </View>
