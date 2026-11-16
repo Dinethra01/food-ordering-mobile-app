@@ -1,0 +1,22 @@
+# Node
+node_modules/
+**/node_modules/
+
+# Expo / React Native
+.expo/
+**/.expo/
+.expo-shared/
+**/.expo-shared/
+
+# env files
+.env
+**/.env
+
+# build / caches
+npm-debug.log*
+.DS_Store
+**/.DS_Store
+
+# OS / editor
+.vscode/
+.idea/
