@@ -2,7 +2,7 @@
 
 **SE2020 – Web and Mobile Technologies | Individual Assignment**
 
-FoodieExpress is a full-stack mobile food ordering application developed using React Native, Expo, Node.js, Express.js, and MongoDB. It allows customers to browse food items, manage their shopping carts, place orders, and track order status. Administrators can manage food items and customer orders through the admin interface.
+FoodieExpress is a full-stack mobile food ordering application developed using React Native, Expo, Node.js, Express.js, and MongoDB. It allows customers to browse food items, manage their shopping carts, place orders, and track order status also. Administrators can manage food items and customer orders through the admin interface.
 
 ## 📌 Main Features
 
