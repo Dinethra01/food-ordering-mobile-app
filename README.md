@@ -110,7 +110,7 @@ The application supports the following order statuses:
 **Platform:** Railway
 
 **Backend URL:**  
-[https://food-ordering-mobile-app-production-abc1.up.railway.app/](https://food-ordering-mobile-app-ofn2.onrender.com)
+[[https://food-ordering-mobile-app-production-abc1.up.railway.app/](https://food-ordering-mobile-app-ofn2.onrender.com)](https://food-ordering-mobile-app-production-abc1.up.railway.app/)
 
 The backend REST API is deployed on Railway, allowing the mobile application to communicate with the production server over the internet.
 
